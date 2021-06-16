@@ -7,7 +7,7 @@
     "clean": "rm -rf genfiles",
     "build-ts": "tsc -p tsconfig.json",
     "build": "npm run clean && npm run build-ts",
-    "analyze": "npm run build && node genfiles/analysis/blah.js"
+    "analyze": "npm run build && node genfiles/analysis/run.js"
   },
   "author": "nkprasad12",
   "license": "ISC",
