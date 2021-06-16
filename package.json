@@ -1,0 +1,13 @@
+{
+  "name": "frame-cruncher",
+  "version": "1.0.0",
+  "description": "Utility to help Melee players analyze their replay files.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "nkprasad12",
+  "license": "ISC",
+  "dependencies": {
+    "@slippi/slippi-js": "^6.1.0"
+  }
+}
