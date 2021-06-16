@@ -28,9 +28,16 @@ export function analyzeGame(game: SlippiGame): void {
 
   actionStates.forEach((stateArray, playerIndex) => {
     console.log(`Report for player: ${playerIndex}`);
-    console.log(stateArray);
+    analyzeActionStates(stateArray);
     console.log("\n\n\n");
   });
+}
+
+function analyzeActionStates(states: number[]) {
+  console.log(states);
+  // State ID taken from https://smashboards.com/threads/list-of-all-possible-character-states-ie-downdamage-downwait.400270/post-19055623
+  const waitFrames = states.filter((state) => state === 14).length;
+  console.log(`Frames in Wait: ${waitFrames}`);
 }
 
 function check<T>(t: T | undefined | null): T {
