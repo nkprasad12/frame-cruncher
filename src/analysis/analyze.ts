@@ -1,4 +1,4 @@
-import { SlippiGame } from "@slippi/slippi-js";
+import { SlippiGame, State } from "@slippi/slippi-js";
 
 export function analyzeGame(game: SlippiGame): void {
   if (game.getSettings().isTeams) {
@@ -34,10 +34,36 @@ export function analyzeGame(game: SlippiGame): void {
 }
 
 function analyzeActionStates(states: number[]) {
-  console.log(states);
-  // State ID taken from https://smashboards.com/threads/list-of-all-possible-character-states-ie-downdamage-downwait.400270/post-19055623
-  const waitFrames = states.filter((state) => state === 14).length;
-  console.log(`Frames in Wait: ${waitFrames}`);
+  let lastState = states[0];
+  const lastActionBeforeWaitMap = new Map<number, number>();
+  for (let i = 1; i < states.length; i++) {
+    const currentState = states[i];
+    if (currentState === State.ACTION_WAIT && lastState !== State.ACTION_WAIT) {
+      if (!lastActionBeforeWaitMap.has(lastState)) {
+        lastActionBeforeWaitMap.set(lastState, 0);
+      }
+      lastActionBeforeWaitMap.set(
+        lastState,
+        lastActionBeforeWaitMap.get(lastState)! + 1
+      );
+    }
+    lastState = currentState;
+  }
+
+  Array.from(lastActionBeforeWaitMap.entries())
+    .map(PreWaitState.fromEntry)
+    .sort((a, b) => b.occurences - a.occurences)
+    .forEach((entry) => console.log(PreWaitState.format(entry)));
+}
+
+function formatState(state: number): string {
+  if (state in State) {
+    return State[state];
+  }
+  // TODO: Handle states that are not in the State enum provided.
+  // More Action State codes at:
+  // https://smashboards.com/threads/list-of-all-possible-character-states-ie-downdamage-downwait.400270/post-19055623
+  return "0x" + state.toString(16);
 }
 
 function check<T>(t: T | undefined | null): T {
@@ -45,4 +71,24 @@ function check<T>(t: T | undefined | null): T {
     throw new Error("Input was null or undefined");
   }
   return t;
+}
+
+interface PreWaitState {
+  state: number;
+  occurences: number;
+}
+
+namespace PreWaitState {
+  export function format(state: PreWaitState): string {
+    return `State ${formatState(state.state)} happened ${
+      state.occurences
+    } times before Wait.`;
+  }
+
+  export function fromEntry(entry: [number, number]): PreWaitState {
+    return {
+      state: entry[0],
+      occurences: entry[1],
+    };
+  }
 }
