@@ -1,10 +1,56 @@
 import { SlippiGame } from "@slippi/slippi-js";
 import { ActionState } from "./action_states";
 
-export function analyzeGame(game: SlippiGame): void {
+export interface GameReport {
+  playerReports: PlayerReport[];
+}
+
+export namespace GameReport {
+  export function format(report: GameReport | null): string {
+    if (report === null) {
+      return "Failed to create game report";
+    }
+    return report.playerReports.map(PlayerReport.format).join("\n\n");
+  }
+}
+
+export interface PlayerReport {
+  playerTag: string;
+  preWaitActions: PreWaitState[];
+}
+
+export namespace PlayerReport {
+  export function format(report: PlayerReport): string {
+    return [`Player: ${report.playerTag}`]
+      .concat(report.preWaitActions.map(PreWaitState.format))
+      .join("\n");
+  }
+}
+
+export interface PreWaitState {
+  state: number;
+  occurences: number;
+}
+
+export namespace PreWaitState {
+  export function format(state: PreWaitState): string {
+    return `State ${formatState(state.state)} happened ${
+      state.occurences
+    } times before Wait.`;
+  }
+
+  export function fromEntry(entry: [number, number]): PreWaitState {
+    return {
+      state: entry[0],
+      occurences: entry[1],
+    };
+  }
+}
+
+export function analyzeGame(game: SlippiGame): GameReport | null {
   if (game.getSettings().isTeams) {
     console.log("Analysis for teams is not yet supported.");
-    return;
+    return null;
   }
 
   const lastFrame = check(game.getMetadata().lastFrame);
@@ -27,12 +73,17 @@ export function analyzeGame(game: SlippiGame): void {
     });
   }
 
-  actionStates.forEach((stateArray, playerIndex) => {
-    const tag = getTag(playerIndex, game) ?? playerIndex;
-    console.log(`Report for player: ${tag}`);
-    analyzeActionStates(stateArray);
-    console.log("\n\n\n");
-  });
+  const reports: PlayerReport[] = Array.from(actionStates.entries()).map(
+    (entry) => {
+      return {
+        playerTag: getTag(entry[0], game) ?? entry[0].toString(),
+        preWaitActions: analyzeActionStates(entry[1]),
+      };
+    }
+  );
+  return {
+    playerReports: reports,
+  };
 }
 
 function getTag(playerIndex: number, game: SlippiGame): string | null {
@@ -45,7 +96,7 @@ function getTag(playerIndex: number, game: SlippiGame): string | null {
   return null;
 }
 
-function analyzeActionStates(states: number[]) {
+function analyzeActionStates(states: number[]): PreWaitState[] {
   let lastState = states[0];
   const lastActionBeforeWaitMap = new Map<number, number>();
   for (let i = 1; i < states.length; i++) {
@@ -62,10 +113,9 @@ function analyzeActionStates(states: number[]) {
     lastState = currentState;
   }
 
-  Array.from(lastActionBeforeWaitMap.entries())
+  return Array.from(lastActionBeforeWaitMap.entries())
     .map(PreWaitState.fromEntry)
-    .sort((a, b) => b.occurences - a.occurences)
-    .forEach((entry) => console.log(PreWaitState.format(entry)));
+    .sort((a, b) => b.occurences - a.occurences);
 }
 
 function formatState(state: number): string {
@@ -80,24 +130,4 @@ function check<T>(t: T | undefined | null): T {
     throw new Error("Input was null or undefined");
   }
   return t;
-}
-
-interface PreWaitState {
-  state: number;
-  occurences: number;
-}
-
-namespace PreWaitState {
-  export function format(state: PreWaitState): string {
-    return `State ${formatState(state.state)} happened ${
-      state.occurences
-    } times before Wait.`;
-  }
-
-  export function fromEntry(entry: [number, number]): PreWaitState {
-    return {
-      state: entry[0],
-      occurences: entry[1],
-    };
-  }
 }

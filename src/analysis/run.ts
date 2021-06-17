@@ -1,5 +1,5 @@
 import { SlippiGame } from "@slippi/slippi-js";
-import { analyzeGame } from "./analyze";
+import { analyzeGame, GameReport } from "./analyze";
 
 const game = new SlippiGame("test.slp");
 
@@ -17,4 +17,4 @@ const game = new SlippiGame("test.slp");
 // const frames = game.getFrames();
 // console.log(frames[0].players); // Print frame when timer starts counting down
 
-analyzeGame(game);
+console.log(GameReport.format(analyzeGame(game)));
