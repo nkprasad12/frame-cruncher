@@ -1,4 +1,5 @@
-import { SlippiGame, State } from "@slippi/slippi-js";
+import { SlippiGame } from "@slippi/slippi-js";
+import { ActionState } from "./action_states";
 
 export function analyzeGame(game: SlippiGame): void {
   if (game.getSettings().isTeams) {
@@ -49,7 +50,7 @@ function analyzeActionStates(states: number[]) {
   const lastActionBeforeWaitMap = new Map<number, number>();
   for (let i = 1; i < states.length; i++) {
     const currentState = states[i];
-    if (currentState === State.ACTION_WAIT && lastState !== State.ACTION_WAIT) {
+    if (currentState === ActionState.Wait && lastState !== ActionState.Wait) {
       if (!lastActionBeforeWaitMap.has(lastState)) {
         lastActionBeforeWaitMap.set(lastState, 0);
       }
@@ -68,12 +69,9 @@ function analyzeActionStates(states: number[]) {
 }
 
 function formatState(state: number): string {
-  if (state in State) {
-    return State[state];
+  if (state in ActionState) {
+    return ActionState[state];
   }
-  // TODO: Handle states that are not in the State enum provided.
-  // More Action State codes at:
-  // https://smashboards.com/threads/list-of-all-possible-character-states-ie-downdamage-downwait.400270/post-19055623
   return "0x" + state.toString(16);
 }
 
