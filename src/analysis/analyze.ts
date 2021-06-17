@@ -27,10 +27,21 @@ export function analyzeGame(game: SlippiGame): void {
   }
 
   actionStates.forEach((stateArray, playerIndex) => {
-    console.log(`Report for player: ${playerIndex}`);
+    const tag = getTag(playerIndex, game) ?? playerIndex;
+    console.log(`Report for player: ${tag}`);
     analyzeActionStates(stateArray);
     console.log("\n\n\n");
   });
+}
+
+function getTag(playerIndex: number, game: SlippiGame): string | null {
+  for (const player of game.getSettings().players) {
+    if (player.playerIndex === playerIndex) {
+      // @ts-ignore  TODO: is there another way to get the name?
+      return player.displayName;
+    }
+  }
+  return null;
 }
 
 function analyzeActionStates(states: number[]) {
