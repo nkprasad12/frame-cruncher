@@ -6,8 +6,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf genfiles",
     "build-ts": "tsc -p tsconfig.json",
-    "build": "npm run clean && npm run build-ts",
-    "analyze": "npm run build && node genfiles/cli/run.js"
+    "build-cli": "npm run clean && npm run build-ts",
+    "build": "npx webpack --config webpack.config.js",
+    "site": "npm run build && xdg-open genfiles/main.html",
+    "analyze": "npm run build-cli && node genfiles/cli/run.js"
   },
   "author": "nkprasad12",
   "license": "ISC",
@@ -16,6 +18,14 @@
     "typescript": "^4.3.2"
   },
   "devDependencies": {
-    "prettier": "2.3.1"
+    "@types/react": "^17.0.11",
+    "@types/react-dom": "^17.0.8",
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "html-webpack-plugin": "^5.3.1",
+    "prettier": "2.3.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "webpack": "^5.39.1",
+    "webpack-cli": "^4.7.2"
   }
 }
