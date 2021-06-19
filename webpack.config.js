@@ -28,12 +28,18 @@ module.exports = {
       },
     ],
   },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+      _src: path.resolve(__dirname, 'src/'),
+    },
+  },
   plugins: [
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       chunks: ['Main'],
       filename: 'main.html',
-      template: 'src/web/main.html',
+      template: './src/web/main.html',
     }),
   ],
   output: {
