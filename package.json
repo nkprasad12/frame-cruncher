@@ -8,7 +8,7 @@
     "build-ts": "tsc -p tsconfig.json",
     "build-cli": "npm run clean && npm run build-ts",
     "build": "npx webpack --config webpack.config.js",
-    "site": "npm run build && xdg-open genfiles/main.html",
+    "site": "npm run build && xdg-open genfiles/index.html",
     "analyze": "npm run build-cli && node genfiles/cli/run.js",
     "update-site": "npm run build && npm run update-docs && npm run push-docs",
     "update-docs": "rm -rf docs && mv genfiles docs && mkdir genfiles",
