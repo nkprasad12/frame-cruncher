@@ -9,7 +9,8 @@
     "build-cli": "npm run clean && npm run build-ts",
     "build": "npx webpack --config webpack.config.js",
     "site": "npm run build && xdg-open genfiles/main.html",
-    "analyze": "npm run build-cli && node genfiles/cli/run.js"
+    "analyze": "npm run build-cli && node genfiles/cli/run.js",
+    "update-site": "npm run build && rm -rf docs && mv genfiles docs && mkdir genfiles && git commit -a -m \"Update site\" && git push"
   },
   "author": "nkprasad12",
   "license": "ISC",
