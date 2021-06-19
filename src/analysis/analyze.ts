@@ -1,4 +1,5 @@
 import { SlippiGame } from "@slippi/slippi-js";
+import { check } from "../utils/checks";
 import { ActionState } from "./action_states";
 
 export interface GameReport {
@@ -28,22 +29,15 @@ export namespace PlayerReport {
 }
 
 export interface PreWaitState {
-  state: number;
-  occurences: number;
+  state: ActionState;
+  waitFrames: number[];
 }
 
 export namespace PreWaitState {
   export function format(state: PreWaitState): string {
-    return `State ${formatState(state.state)} happened ${
-      state.occurences
-    } times before Wait.`;
-  }
-
-  export function fromEntry(entry: [number, number]): PreWaitState {
-    return {
-      state: entry[0],
-      occurences: entry[1],
-    };
+    return `${ActionState[state.state]} happened ${
+      state.waitFrames.length
+    } times, wait lengths (in frames): ${state.waitFrames}`;
   }
 }
 
@@ -96,38 +90,52 @@ function getTag(playerIndex: number, game: SlippiGame): string | null {
   return null;
 }
 
-function analyzeActionStates(states: number[]): PreWaitState[] {
-  let lastState = states[0];
-  const lastActionBeforeWaitMap = new Map<number, number>();
+export interface ActionData {
+  /** The state associated with this data point. */
+  state: ActionState;
+  /** An integer number of the frames spent in this state. */
+  frames: number;
+}
+
+function processStateSeries(states: number[]): ActionData[] {
+  const result: ActionData[] = [{ state: states[0], frames: 1 }];
   for (let i = 1; i < states.length; i++) {
-    const currentState = states[i];
-    if (currentState === ActionState.Wait && lastState !== ActionState.Wait) {
-      if (!lastActionBeforeWaitMap.has(lastState)) {
-        lastActionBeforeWaitMap.set(lastState, 0);
-      }
-      lastActionBeforeWaitMap.set(
-        lastState,
-        lastActionBeforeWaitMap.get(lastState)! + 1
-      );
+    const lastState = result[result.length - 1];
+    if (states[i] === lastState.state) {
+      lastState.frames += 1;
+    } else {
+      result.push({ state: states[i], frames: 1 });
     }
-    lastState = currentState;
+  }
+  return result;
+}
+
+function analyzeActionStates(states: number[]): PreWaitState[] {
+  const actionData = processStateSeries(states);
+  const lastActionBeforeWaitMap = new Map<ActionState, number[]>();
+  let lastData: ActionData | null = null;
+  for (const currentData of actionData) {
+    if (currentData.state === ActionState.Wait && lastData !== null) {
+      if (!lastActionBeforeWaitMap.has(lastData.state)) {
+        lastActionBeforeWaitMap.set(lastData.state, []);
+      }
+      lastActionBeforeWaitMap.get(lastData.state)!.push(currentData.frames);
+    }
+    lastData = currentData;
   }
 
   return Array.from(lastActionBeforeWaitMap.entries())
-    .map(PreWaitState.fromEntry)
-    .sort((a, b) => b.occurences - a.occurences);
+    .map((entry) => {
+      return {
+        state: entry[0],
+        waitFrames: removeIntentionalWaits(entry[1]),
+      };
+    })
+    .filter((data) => data.waitFrames.length > 0)
+    .sort((a, b) => b.waitFrames.length - a.waitFrames.length);
 }
 
-function formatState(state: number): string {
-  if (state in ActionState) {
-    return ActionState[state];
-  }
-  return "0x" + state.toString(16);
-}
-
-function check<T>(t: T | undefined | null): T {
-  if (t === undefined || t === null) {
-    throw new Error("Input was null or undefined");
-  }
-  return t;
+function removeIntentionalWaits(waitFrames: number[]) {
+  // For now, just assume anything over 17 frames (safe reaction window) is intentional.
+  return waitFrames.filter((frames) => frames <= 17);
 }
